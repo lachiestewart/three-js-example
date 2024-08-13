@@ -2,12 +2,14 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
 
-let axes, scene, camera, renderer, loader, light, raycaster, plantModel, cubeModel, pointer, controls, exporter;
+let axes, scene, camera, renderer, loader, light, raycaster, plantModel, cubeModel, pointer, controls, gltfExporter, objExporter;
 
 const container = document.getElementById('container');
 const infoBox = document.getElementById('info-box');
-const downloadButton = document.getElementById('download-button');
+const downloadGLTFButton = document.getElementById('download-gltf');
+const downloadOBJButton = document.getElementById('download-obj');
 const FOV = 75;
 
 // link used to download the file
@@ -37,7 +39,8 @@ const init = () => {
     raycaster = new THREE.Raycaster();
     pointer = new THREE.Vector2();
 
-    exporter = new GLTFExporter();
+    gltfExporter = new GLTFExporter();
+    objExporter = new OBJExporter();
 }
 
 // Loads a basic cube model
@@ -191,22 +194,30 @@ const saveArrayBuffer = (buffer, filename) => {
     save(new Blob([buffer], { type: 'application/octet-stream' }), filename);
 }
 
-const onDownloadButtonClick = () => {
-    exporter.parse(
-        scene,
-        result => {
-            if (result instanceof ArrayBuffer) {
-                saveArrayBuffer(result, 'scene.glb');
-            } else {
-                const output = JSON.stringify(result, null, 2);
-                saveString(output, 'scene.gltf');
-            }
-        },
-        error => console.log('An error happened')
-    );
+const onDownloadButtonClick = (fileType) => {
+    switch (fileType) {
+        case 'gltf':
+            gltfExporter.parse(
+                scene,
+                result => {
+                    if (result instanceof ArrayBuffer) {
+                        saveArrayBuffer(result, 'scene.glb');
+                    } else {
+                        const output = JSON.stringify(result, null, 2);
+                        saveString(output, 'scene.gltf');
+                    }
+                },
+                error => console.log('An error happened while saving the scene')
+            );
+            break;
+        case 'obj':
+            const data = objExporter.parse(scene);
+            saveString(data, 'scene.obj');
+            break;
+        default:
+            break;
+    }
 }
-
-
 
 window.addEventListener('keydown', onKeyDown);
 window.addEventListener('resize', onWindowResize);
@@ -214,6 +225,7 @@ window.addEventListener('load', updatePointer);
 container.addEventListener('mousemove', onMouseMove);
 container.addEventListener('mouseout', onMouseOut);
 container.addEventListener('click', onClick);
-downloadButton.addEventListener('click', onDownloadButtonClick);
+downloadGLTFButton.addEventListener('click', () => onDownloadButtonClick('gltf'));
+downloadOBJButton.addEventListener('click', () => onDownloadButtonClick('obj'));
 
 console.log(scene.children);

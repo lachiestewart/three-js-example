@@ -24,7 +24,6 @@ const init = () => {
 
     camera = new THREE.PerspectiveCamera(FOV, container.clientWidth / container.clientHeight);
     camera.position.set(5, 5, 5);
-    camera.lookAt(scene.position);
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
@@ -65,7 +64,7 @@ const loadModel = (url, name) => {
 // Loads a plant model
 const loadPlant = () => {
     plantModel = loadModel('models/fiddle_leaf_plant.glb', 'plant1');
-    plantModel.position.set(0, 0, 10);
+    // plantModel.position.set(0, 0, 10);
     scene.add(plantModel);
 }
 
@@ -109,9 +108,9 @@ init();
 
 addLight();
 
-loadPlant();
+// loadPlant();
 
-loadPlant2();
+// loadPlant2();
 
 loadCube();
 
@@ -152,21 +151,18 @@ const onClick = (event) => {
     }
 }
 
-// Move the camera in the direction of the arrow keys, still in progress
+// Move the camera in the direction of the arrow keys
 const onKeyDown = (event) => {
-    const b = camera.position;
-    const rotation = camera.rotation;
-    const yRotation = rotation.y;
-    const piOver2 = Math.PI / 2;
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+    const up = new THREE.Vector3(0, 1, 0);
     const movementScalar = 0.5;
     switch (event.key) {
         case 'ArrowLeft':
-            camera.position.x += movementScalar * Math.cos(yRotation + piOver2);
-            camera.position.z += movementScalar * Math.sin(yRotation + piOver2);
+            camera.position.add(cameraDirection.cross(up).normalize().multiplyScalar(-movementScalar));
             break;
         case 'ArrowRight':
-            camera.position.x += movementScalar * Math.cos(yRotation - piOver2);
-            camera.position.z += movementScalar * Math.sin(yRotation - piOver2);
+            camera.position.add(cameraDirection.cross(up).normalize().multiplyScalar(movementScalar));
             break;
         case 'ArrowUp':
             camera.position.y += movementScalar;
@@ -174,19 +170,10 @@ const onKeyDown = (event) => {
         case 'ArrowDown':
             camera.position.y -= movementScalar;
             break;
-        case '1':
-            camera.position.set(0, 0, 5);
-            break
-        case '2':
-            camera.position.set(0, 5, 0);
-            break
-        case '3':
-            camera.position.set(5, 0, 0);
-            break
         default:
             break;
     }
-    console.log(camera.rotation);
+    camera.updateProjectionMatrix();
 }
 
 const save = (blob, filename) => {

@@ -15,6 +15,7 @@ const _startEvent = { type: 'start' };
 const _endEvent = { type: 'end' };
 
 const TWO_PI = 2 * Math.PI;
+const PI_OVER_TWO = Math.PI / 2;
 
 const KEYS = { LEFT: 'ArrowLeft', UP: 'ArrowUp', RIGHT: 'ArrowRight', BOTTOM: 'ArrowDown' };
 const MOUSE_BUTTONS = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
@@ -62,7 +63,7 @@ class OrbitControls extends THREE.EventDispatcher {
         // How far you can orbit vertically, upper and lower limits.
         // Range is 0 to Math.PI radians.
         this.minPolarAngle = 0; // radians
-        this.maxPolarAngle = Math.PI; // radians
+        this.maxPolarAngle = PI_OVER_TWO - MIN_TARGET_HEIGHT; // radians
 
         // How far you can orbit horizontally, upper and lower limits.
         // If set, the interval [ min, max ] must be a sub-interval of [ - 2 PI, 2 PI ], with ( max - min < 2 PI )

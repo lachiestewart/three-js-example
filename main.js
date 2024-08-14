@@ -12,6 +12,7 @@ const container = document.getElementById('container');
 const infoBox = document.getElementById('info-box');
 const downloadGLTFButton = document.getElementById('download-gltf');
 const downloadOBJButton = document.getElementById('download-obj');
+const imageDownloadButton = document.getElementById('image-download');
 const FOV = 75;
 
 const GRID_SIZE = 7;
@@ -21,9 +22,6 @@ const MAX_CAMERA_DIST = GRID_SIZE * TILE_SIZE;
 
 // link used to download the file
 const link = document.createElement('a');
-link.style.display = 'none';
-document.body.appendChild(link);
-
 
 // Initialises main components of the scene
 const init = () => {
@@ -35,9 +33,9 @@ const init = () => {
     camera = new THREE.PerspectiveCamera(FOV, container.clientWidth / container.clientHeight);
     camera.position.set(5, 5, 5);
     camera.lookAt(scene.position);
-    
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
@@ -313,20 +311,15 @@ const onClick = (event) => {
     // }
 }
 
-const save = (blob, filename) => {
-    link.href = URL.createObjectURL(blob);
+const saveFile = (data, filename) => {
+    document.body.appendChild(link);
+    link.href = data
     link.download = filename;
     link.click();
+    document.body.removeChild(link);
 }
 
-const saveString = (text, filename) => {
-    save(new Blob([text], { type: 'text/plain' }), filename);
-}
-
-
-const saveArrayBuffer = (buffer, filename) => {
-    save(new Blob([buffer], { type: 'application/octet-stream' }), filename);
-}
+const createDataUrl = (text, type) => URL.createObjectURL(new Blob([text], { type: type }));
 
 const onDownloadButtonClick = (fileType) => {
     switch (fileType) {
@@ -335,24 +328,35 @@ const onDownloadButtonClick = (fileType) => {
                 scene,
                 result => {
                     if (result instanceof ArrayBuffer) {
-                        saveArrayBuffer(result, 'scene.glb');
+                        saveFile(createDataUrl(result, 'application/octet-stream'), 'scene.glb');
                     } else {
-                        const output = JSON.stringify(result, null, 2);
-                        saveString(output, 'scene.gltf');
+                        const output = JSON.stringify(result, null, 1);
+                        saveFile(createDataUrl(output, 'text/plain'), 'scene.gltf');
                     }
                 },
                 error => console.log('An error happened while saving the scene')
             );
             break;
         case 'obj':
-            saveString(objExporter.parse(scene), 'scene.obj');
+            const objData = objExporter.parse(scene);
+            saveFile(createDataUrl(objData, 'text/plain'), 'scene.obj');
+            break;
+        case 'jpg':
+            try {
+                const strMime = "image/jpeg";
+                const strDownloadMime = "image/octet-stream";
+                const imgData = renderer.domElement.toDataURL(strMime);
+                saveFile(imgData.replace(strMime, strDownloadMime), "scene.jpg");
+            } catch (e) {
+                console.log(e);
+                return;
+            }
             break;
         default:
             break;
     }
 }
 
-// window.addEventListener('keydown', onKeyDown);
 window.addEventListener('resize', onWindowResize);
 window.addEventListener('load', updatePointer);
 container.addEventListener('mousemove', onMouseMove);
@@ -360,5 +364,6 @@ container.addEventListener('mouseout', onMouseOut);
 container.addEventListener('click', onClick);
 downloadGLTFButton.addEventListener('click', () => onDownloadButtonClick('gltf'));
 downloadOBJButton.addEventListener('click', () => onDownloadButtonClick('obj'));
+imageDownloadButton.addEventListener('click', () => onDownloadButtonClick('jpg'));
 
 console.log(scene.children);

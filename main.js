@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls } from './OrbitControls.js';
+// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
@@ -34,14 +35,14 @@ const init = () => {
     camera = new THREE.PerspectiveCamera(FOV, container.clientWidth / container.clientHeight);
     camera.position.set(5, 5, 5);
     camera.lookAt(scene.position);
+    
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
-
     controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
+    // controls.enableDamping = true;
     // Prevent camera from going below the ground
     controls.maxPolarAngle = Math.PI / 2 - 0.1;
     // Prevent camera from going too far away or too close
@@ -49,18 +50,7 @@ const init = () => {
     controls.maxDistance = MAX_CAMERA_DIST;
     controls.minTargetRadius = MIN_CAMERA_DIST;
     controls.maxTargetRadius = MAX_CAMERA_DIST;
-
-    // Attempting to try and stop camera from going too far away
-    controls.addEventListener('change', () => {
-        if (camera.position.y < 0.1) {
-            console.log('Camera too low');
-            controls.enableDamping = false;
-            camera.position.y = 0.2;
-            camera.lookAt(scene.position);
-            camera.updateProjectionMatrix();
-            controls.enableDamping = true;
-        }
-    });
+    // controls.listenToKeyEvents(window); // Allows the camera to move with the arrow keys
 
     loader = new GLTFLoader();
     raycaster = new THREE.Raycaster();
@@ -232,8 +222,6 @@ const getIntersects = () => {
 // Method that gets called every frame
 const animate = () => {
 
-    controls.update();
-
     light.position.copy(camera.position);
 
     if (pointer) {
@@ -325,38 +313,6 @@ const onClick = (event) => {
     // }
 }
 
-// Move the camera in the direction of the arrow keys
-const onKeyDown = (event) => {
-    if (!pointer) {
-        return;
-    }
-    const cameraDirection = new THREE.Vector3();
-    camera.getWorldDirection(cameraDirection);
-    const up = new THREE.Vector3(0, 1, 0);
-    const movementScalar = 0.5;
-    switch (event.key) {
-        case 'ArrowLeft':
-            event.preventDefault();
-            camera.position.add(cameraDirection.cross(up).normalize().multiplyScalar(-movementScalar));
-            break;
-        case 'ArrowRight':
-            event.preventDefault();
-            camera.position.add(cameraDirection.cross(up).normalize().multiplyScalar(movementScalar));
-            break;
-        case 'ArrowUp':
-            event.preventDefault();
-            camera.position.y += movementScalar;
-            break;
-        case 'ArrowDown':
-            event.preventDefault();
-            camera.position.y -= movementScalar;
-            break;
-        default:
-            break;
-    }
-    camera.updateProjectionMatrix();
-}
-
 const save = (blob, filename) => {
     link.href = URL.createObjectURL(blob);
     link.download = filename;
@@ -396,7 +352,7 @@ const onDownloadButtonClick = (fileType) => {
     }
 }
 
-window.addEventListener('keydown', onKeyDown);
+// window.addEventListener('keydown', onKeyDown);
 window.addEventListener('resize', onWindowResize);
 window.addEventListener('load', updatePointer);
 container.addEventListener('mousemove', onMouseMove);
